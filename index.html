@@ -181,6 +181,12 @@
         </div>
       </div>
 
+      <div class="field" id="customUrlField" hidden>
+        <label for="customUrl">Base URL Kustom</label>
+        <input type="text" id="customUrl" placeholder="https://api.deepseek.com/v1" autocomplete="off" spellcheck="false">
+        <p class="hint">Masukkan Base URL penuh, contoh: https://api.deepseek.com/v1 atau http://localhost:4000/v1</p>
+      </div>
+
       <div class="presets" id="presets" aria-label="Preset API key"></div>
 
       <p class="hint" style="margin-top:14px">
@@ -232,12 +238,22 @@ const PROVIDERS = [
   { name:'NVIDIA NIM',    base:'https://integrate.api.nvidia.com/v1' },
   { name:'Anthropic',     base:'https://api.anthropic.com/v1' },
   { name:'LiteLLM Proxy', base:'https://your-proxy.litellm.ai' },
-  { name:'Kustom',        base:'' }
+  { name:'Kustom',        base:'custom' }
 ];
 
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
 const providerSelect = document.getElementById('provider');
+const customUrlField = document.getElementById('customUrlField');
+const customUrlInput = document.getElementById('customUrl');
+
+function syncCustomField(){
+  const isCustom = providerSelect.value === 'custom';
+  customUrlField.hidden = !isCustom;
+  if(isCustom) customUrlInput.focus();
+}
+providerSelect.addEventListener('change', syncCustomField);
+
 PROVIDERS.forEach((p,i)=>{
   const o=document.createElement('option');
   o.value=p.base; o.textContent=p.name;
@@ -252,6 +268,8 @@ function buildPresets(){
     b.className='preset'; b.textContent=p.name;
     b.addEventListener('click',()=>{
       providerSelect.value=p.base;
+      syncCustomField();
+      const t=providerSelect.value==='custom'?customUrlInput:'';
       document.getElementById('key').focus();
     });
     el.appendChild(b);
@@ -330,10 +348,12 @@ function clearError(){document.getElementById('error').style.display='none';}
 
 async function detect(){
   const key=document.getElementById('key').value.trim();
-  const base=document.getElementById('provider').value.trim();
+  const base=providerSelect.value.trim()==='custom'
+    ? customUrlInput.value.trim()
+    : providerSelect.value.trim();
 
   if(!key){showError('Mohon masukkan API key terlebih dahulu.');document.getElementById('key').focus();return;}
-  if(!base){showError('Untuk provider kustom, masukkan Base URL lengkap.');return;}
+  if(!base){showError('Untuk provider kustom, masukkan Base URL lengkap.');customUrlInput.focus();return;}
 
   const btn=document.getElementById('detect');
   btn.disabled=true;clearError();
