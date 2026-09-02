@@ -121,13 +121,14 @@
 
   .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
   .model-chip{
-    background:var(--color-muted);border:1px solid var(--color-border);border-radius:8px;
+    background:var(--color-muted);color:var(--color-foreground);
+    border:1px solid var(--color-border);border-radius:8px;
     padding:10px 12px;font-size:12.5px;display:flex;align-items:center;gap:9px;
     transition:border-color .2s,background .2s;
   }
   .model-chip:hover{border-color:var(--color-accent);background:var(--color-secondary)}
   .model-chip .glyph{color:var(--color-accent);flex-shrink:0}
-  .model-chip .name{word-break:break-word}
+  .model-chip .name{color:var(--color-foreground);word-break:break-word}
   .model-chip .copy{color:var(--color-muted-foreground);opacity:0;margin-left:auto;font-size:11px;flex-shrink:0;transition:opacity .2s}
   .model-chip:hover .copy{opacity:1}
   .model-chip .copy:hover{color:var(--color-accent)}

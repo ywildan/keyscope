@@ -136,6 +136,52 @@ Proxy yang memanggil endpoint `/models` milik provider.
 
 <br>
 
+## 🧯 Pemecahan Masalah
+
+### 🔠 Nama model tampil hitam / susah dibaca
+
+Chip model adalah elemen `<button>`, dan browser memakai warna teks **hitam default** jika tidak diberi warna eksplisit di atas kartu gelap. Perbaikan: pastikan `color` di-set terang pada `.model-chip`, `.model-chip .name`, dan `.model-chip .copy`.
+
+```css
+.model-chip{ background:var(--color-muted); color:var(--color-foreground); }
+.model-chip .name{ color:var(--color-foreground); }
+.model-chip .copy{ color:var(--color-muted-foreground); }
+```
+
+> Pertahankan kontras ≥ 4.5:1 (`--color-foreground:#F8FAFC` di atas `--color-muted:#272F42`) agar mudah dibaca di dark mode.
+
+### 🌐 Provider panel (New API / one-api) tidak muncul model
+
+Gateway seperti **kktoken.cc** (panel New API) punya API di path **`/v1`**, sedangkan KeyScope otomatis menambah `/models` di belakang Base URL. Karena itu:
+
+| Salah (tidak muncul) | Benar (muncul) |
+|---|---|
+| `https://kktoken.cc` → jadi `/models` (isinya HTML dashboard) | `https://kktoken.cc/v1` → jadi `/v1/models` ✅ |
+| `https://kktoken.cc/models` → 404 / HTML | |
+
+**Fix:** di dropdown pilih **Kustom**, lalu isi Base URL lengkap dengan `/v1`:
+```
+https://kktoken.cc/v1
+```
+Cara cepat verifikasi key benar: `curl -H "Authorization: Bearer <key>" https://<host>/v1/models` → harus mengembalikan JSON berisi `data` model.
+
+### 🔧 Base URL di KeyScope
+
+- Provider preset (OpenAI, DeepSeek, Groq, dst.) sudah otomatis menyertakan `/v1`.
+- Panel gateway yang diisi manual (Kustom) **wajib menyertakan `/v1`** kecuali base URL-nya sudah berakhiran `/models`.
+
+### 🚫 `/api/models` mengembalikan halaman 404
+
+Artinya serverless function tidak terdaftar. Gunakan konfigurasi Vercel **zero-config** (tanpa blok `builds` legacy) supaya folder `api/` otomatis terdeteksi sebagai function:
+
+```json
+{
+  "functions": { "api/models.js": { "maxDuration": 30 } }
+}
+```
+
+<br>
+
 ## 🛠 Tech Stack
 
 - **Frontend:** HTML5 + CSS3 murni (desain Dark Mode OLED, font *JetBrains Mono*)
