@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KeyScope · API Model Detector</title>
+<meta name="description" content="KeyScope — deteksi model AI apa saja yang bisa diakses oleh sebuah API key.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-primary:#1E293B;
+    --color-on-primary:#FFFFFF;
+    --color-secondary:#334155;
+    --color-on-secondary:#FFFFFF;
+    --color-accent:#22C55E;
+    --color-on-accent:#0F172A;
+    --color-background:#0F172A;
+    --color-foreground:#F8FAFC;
+    --color-card:#1B2336;
+    --color-card-foreground:#F8FAFC;
+    --color-muted:#272F42;
+    --color-muted-foreground:#94A3B8;
+    --color-border:#475569;
+    --color-destructive:#EF4444;
+    --color-on-destructive:#000000;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{
+    background:var(--color-background);
+    color:var(--color-foreground);
+    font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .container{max-width:880px;margin:0 auto;padding:0 20px}
+
+  header.site{
+    border-bottom:1px solid var(--color-border);
+    padding:20px 0;
+    margin-bottom:32px;
+    background:linear-gradient(180deg,rgba(30,41,59,.35),transparent);
+  }
+  header.site .inner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:.5px}
+  .logo .dot{width:10px;height:10px;border-radius:50%;background:var(--color-accent);box-shadow:0 0 10px var(--color-accent)}
+  .badge{
+    font-size:12px;color:var(--color-accent);
+    border:1px solid var(--color-accent);border-radius:999px;
+    padding:4px 10px;opacity:.9;
+  }
+
+  h1{font-size:clamp(24px,4vw,38px);line-height:1.2;margin-bottom:12px;letter-spacing:-.5px}
+  h1 .accent{color:var(--color-accent);text-shadow:0 0 12px rgba(34,197,94,.35)}
+  .sub{color:var(--color-muted-foreground);margin-bottom:28px;max-width:640px}
+
+  .panel{background:var(--color-card);border:1px solid var(--color-border);border-radius:12px;padding:24px;margin-bottom:24px}
+  .field{margin-bottom:18px}
+  .field label{display:block;font-size:13px;color:var(--color-muted-foreground);margin-bottom:8px;letter-spacing:.5px}
+  .field input[type=text],.field input[type=password],.field select{
+    width:100%;padding:12px 14px;font-size:14px;
+    background:var(--color-muted);border:1px solid var(--color-border);border-radius:8px;
+    color:var(--color-foreground);font-family:inherit;transition:border-color .2s,box-shadow .2s;
+  }
+  .field input:focus,.field select:focus{
+    outline:none;border-color:var(--color-accent);box-shadow:0 0 0 3px rgba(34,197,94,.15);
+  }
+  .field .hint{font-size:12px;color:var(--color-muted-foreground);margin-top:6px}
+
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .row .field{flex:1;min-width:180px;margin-bottom:0}
+
+  button{
+    cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;
+    padding:12px 20px;border-radius:8px;border:1px solid transparent;
+    transition:background .2s,transform .1s,box-shadow .2s,opacity .2s;
+  }
+  button:active{transform:translateY(1px)}
+  button.primary{
+    background:var(--color-accent);color:var(--color-on-accent);
+    box-shadow:0 0 16px rgba(34,197,94,.25);
+  }
+  button.primary:hover{box-shadow:0 0 22px rgba(34,197,94,.4)}
+  button.primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+  button:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}
+
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .preset{
+    background:var(--color-muted);color:var(--color-muted-foreground);
+    border:1px solid var(--color-border);padding:6px 12px;font-size:12px;border-radius:999px;
+  }
+  .preset:hover{color:var(--color-accent);border-color:var(--color-accent)}
+
+  #status{display:none;align-items:center;gap:10px;margin-bottom:16px;font-size:14px;color:var(--color-accent)}
+  .spinner{width:16px;height:16px;border:2px solid var(--color-border);border-top-color:var(--color-accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .error{
+    display:none;background:rgba(239,68,68,.12);border:1px solid var(--color-destructive);
+    color:#FCA5A5;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:14px;
+    white-space:pre-wrap;word-break:break-word;
+  }
+
+  .summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+  .stat{
+    flex:1;min-width:120px;background:var(--color-muted);border:1px solid var(--color-border);
+    border-radius:8px;padding:12px 16px;text-align:center;
+  }
+  .stat .num{font-size:24px;font-weight:700;color:var(--color-accent)}
+  .stat .lbl{font-size:11px;color:var(--color-muted-foreground);letter-spacing:1px;margin-top:2px}
+
+  .group{margin-bottom:22px}
+  .group h3{
+    font-size:13px;letter-spacing:1.5px;color:var(--color-muted-foreground);
+    text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--color-border);
+    display:flex;align-items:center;gap:8px;
+  }
+  .group .count{color:var(--color-accent);font-weight:700}
+  chip{cursor:pointer;user-select:none}
+
+  .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+  .model-chip{
+    background:var(--color-muted);border:1px solid var(--color-border);border-radius:8px;
+    padding:10px 12px;font-size:12.5px;display:flex;align-items:center;gap:9px;
+    transition:border-color .2s,background .2s;
+  }
+  .model-chip:hover{border-color:var(--color-accent);background:var(--color-secondary)}
+  .model-chip .glyph{color:var(--color-accent);flex-shrink:0}
+  .model-chip .name{word-break:break-word}
+  .model-chip .copy{color:var(--color-muted-foreground);opacity:0;margin-left:auto;font-size:11px;flex-shrink:0;transition:opacity .2s}
+  .model-chip:hover .copy{opacity:1}
+  .model-chip .copy:hover{color:var(--color-accent)}
+
+  .empty{color:var(--color-muted-foreground);text-align:center;padding:30px 0;font-size:14px}
+
+  .tips{margin-top:24px;padding:18px;border:1px dashed var(--color-border);border-radius:10px;font-size:13px;color:var(--color-muted-foreground)}
+  .tips h3{color:var(--color-foreground);font-size:14px;margin-bottom:10px}
+  .tips code{color:var(--color-accent);background:var(--color-muted);padding:2px 6px;border-radius:4px;font-size:12px}
+
+  footer.site{border-top:1px solid var(--color-border);margin-top:48px;padding:24px 0;color:var(--color-muted-foreground);font-size:12px;text-align:center}
+
+  @media (prefers-reduced-motion:reduce){
+    .spinner{animation-duration:1.6s}
+    *{transition:none!important}
+  }
+  @media (max-width:600px){
+    .panel{padding:18px}
+    .row{flex-direction:column;align-items:stretch}
+    .row .field{min-width:0}
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="container inner">
+    <div class="logo"><span class="dot"></span> KeyScope</div>
+    <span class="badge">v1.0 · client-side</span>
+  </div>
+</header>
+
+<main class="container">
+  <section>
+    <h1>Model AI apa saja yang <span class="accent">terhubung</span> dengan API key-mu?</h1>
+    <p class="sub">Tempel API key dan pilih provider-nya. Alat ini memanggil endpoint <code>/models</code> dan menampilkan semua model yang bisa kamu akses — dikelompokkan otomatis per kategori.</p>
+
+    <div class="panel">
+      <div class="row">
+        <div class="field" style="flex:1.6">
+          <label for="key">API Key</label>
+          <input type="password" id="key" placeholder="sk-..." autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="provider">Provider / Base URL</label>
+          <select id="provider"></select>
+        </div>
+        <div class="field" style="flex:0 0 auto">
+          <label>&nbsp;</label>
+          <button id="detect" class="primary">Deteksi</button>
+        </div>
+      </div>
+
+      <div class="presets" id="presets" aria-label="Preset API key"></div>
+
+      <p class="hint" style="margin-top:14px">
+        API key hanya dikirim dari browser-mu ke serverless function proxy — tidak disimpan di mana pun.
+      </p>
+    </div>
+
+    <div id="status"><span class="spinner"></span><span id="statusText">Menghubungi endpoint /models...</span></div>
+    <div class="error" id="error" role="alert"></div>
+
+    <section id="results" hidden>
+      <div class="summary">
+        <div class="stat"><div class="num" id="totalCount">0</div><div class="lbl">Total</div></div>
+        <div class="stat"><div class="num" id="gptCount">0</div><div class="lbl">GPT</div></div>
+        <div class="stat"><div class="num" id="embedCount">0</div><div class="lbl">Embedding</div></div>
+        <div class="stat"><div class="num" id="otherCount">0</div><div class="lbl">Lainnya</div></div>
+      </div>
+      <div id="groups" class="groups"></div>
+    </section>
+
+    <div class="tips">
+      <h3>Ketentuan</h3>
+      <ul>
+        <li>Klik chip model untuk menyalin nama model.</li>
+        <li>Mendukung provider OpenAI-compatible (OpenAI, DeepSeek, OpenRouter, Groq, dll).</li>
+        <li>Beberapa provider tidak mengizinkan listing model — akan menampilkan pesan error yang jelas.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="container">KeyScope · API Model Detector · Deploy sebagai static site + serverless function di Vercel</div>
+</footer>
+
+<script>
+const API_BASE = '/api/models';
+
+const PROVIDERS = [
+  { name:'OpenAI',        base:'https://api.openai.com/v1' },
+  { name:'DeepSeek',      base:'https://api.deepseek.com/v1' },
+  { name:'Groq',          base:'https://api.groq.com/openai/v1' },
+  { name:'OpenRouter',    base:'https://openrouter.ai/api/v1' },
+  { name:'Together AI',   base:'https://api.together.xyz/v1' },
+  { name:'Mistral',       base:'https://api.mistral.ai/v1' },
+  { name:'Fireworks',     base:'https://api.fireworks.ai/inference/v1' },
+  { name:'Perplexity',    base:'https://api.perplexity.ai' },
+  { name:'xAI (Grok)',    base:'https://api.x.ai/v1' },
+  { name:'NVIDIA NIM',    base:'https://integrate.api.nvidia.com/v1' },
+  { name:'Anthropic',     base:'https://api.anthropic.com/v1' },
+  { name:'LiteLLM Proxy', base:'https://your-proxy.litellm.ai' },
+  { name:'Kustom',        base:'' }
+];
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+const providerSelect = document.getElementById('provider');
+PROVIDERS.forEach((p,i)=>{
+  const o=document.createElement('option');
+  o.value=p.base; o.textContent=p.name;
+  if(p.name==='OpenAI') o.selected=true;
+  providerSelect.appendChild(o);
+});
+
+function buildPresets(){
+  const el=document.getElementById('presets');
+  PROVIDERS.filter(p=>p.base).slice(0,8).forEach(p=>{
+    const b=document.createElement('button');
+    b.className='preset'; b.textContent=p.name;
+    b.addEventListener('click',()=>{
+      providerSelect.value=p.base;
+      document.getElementById('key').focus();
+    });
+    el.appendChild(b);
+  });
+}
+buildPresets();
+
+function classify(models){
+  return {
+    gpt:   models.filter(m=>/gpt[-_]?4|\bgpt4\b/i.test(m) && !/embed/i.test(m)),
+    strong:models.filter(m=>/claude|gemini|deepseek|llama|mistral|qwen|grok|command/i.test(m) && !/embed/i.test(m) && !/gpt/i.test(m)),
+    embed: models.filter(m=>/embed/i.test(m)),
+    other: models.filter(m=>!/gpt/i.test(m) && !/embed/i.test(m) && !/claude|gemini|deepseek|llama|mistral|qwen|grok|command/i.test(m))
+  };
+}
+
+function renderChips(models){
+  return models.map(m=>(
+    `<button class="model-chip" onclick="copyModel(this)" data-model="${esc(m)}">
+      <span class="glyph" aria-hidden="true">&#9656;</span>
+      <span class="name">${esc(m)}</span>
+      <span class="copy">&#10697;</span>
+    </button>`
+  )).join('') || '<div class="empty">Tidak ada model di kategori ini</div>';
+}
+
+function renderResults(models){
+  const groups=document.getElementById('groups');
+  const cats=classify(models);
+  document.getElementById('totalCount').textContent=models.length;
+  document.getElementById('gptCount').textContent=cats.gpt.length+cats.strong.length;
+  document.getElementById('embedCount').textContent=cats.embed.length;
+  document.getElementById('otherCount').textContent=cats.other.length;
+
+  const sections=[
+    {title:'GPT / LLM Utama', models:cats.gpt.concat(cats.strong)},
+    {title:'Embedding', models:cats.embed},
+    {title:'Lainnya', models:cats.other}
+  ];
+  groups.innerHTML=sections.map(s=>(
+    s.models.length ? `
+      <div class="group">
+        <h3>${esc(s.title)} <span class="count">${s.models.length}</span></h3>
+        <div class="model-grid">${renderChips(s.models)}</div>
+      </div>` : ''
+  )).join('');
+
+  document.getElementById('results').hidden=false;
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+window.copyModel=function(btn){
+  const text=btn.dataset.model;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>btn.classList.add('copied'));
+  }else{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');}catch(e){}
+    document.body.removeChild(ta);
+  }
+  const old=btn.querySelector('.copy').textContent;
+  btn.querySelector('.copy').textContent='OK';
+  setTimeout(()=>btn.querySelector('.copy').textContent=old,1200);
+};
+
+function setStatus(on,msg){
+  const el=document.getElementById('status');
+  el.style.display=on?'flex':'none';
+  if(msg)document.getElementById('statusText').textContent=msg;
+}
+function showError(msg){
+  const el=document.getElementById('error');
+  el.textContent=msg;el.style.display='block';
+}
+function clearError(){document.getElementById('error').style.display='none';}
+
+async function detect(){
+  const key=document.getElementById('key').value.trim();
+  const base=document.getElementById('provider').value.trim();
+
+  if(!key){showError('Mohon masukkan API key terlebih dahulu.');document.getElementById('key').focus();return;}
+  if(!base){showError('Untuk provider kustom, masukkan Base URL lengkap.');return;}
+
+  const btn=document.getElementById('detect');
+  btn.disabled=true;clearError();
+  setStatus(true,'Menghubungi endpoint /models...');
+
+  try{
+    const res=await fetch(API_BASE,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({apiKey:key,baseUrl:base})
+    });
+    const data=await res.json().catch(()=>({error:'Respons tidak valid dari server.'}));
+
+    if(!res.ok || data.error){
+      showError(data.error || ('HTTP '+res.status));
+    }else if(Array.isArray(data.models)){
+      renderResults(data.models);
+      setStatus(false);
+    }else{
+      showError('Format respons tidak dikenali.');
+    }
+  }catch(e){
+    showError('Gagal terhubung: '+e.message);
+  }finally{
+    setStatus(false);
+    btn.disabled=false;
+  }
+}
+
+document.getElementById('detect').addEventListener('click',detect);
+document.getElementById('key').addEventListener('keydown',e=>{if(e.key==='Enter')detect();});
+</script>
+</body>
+</html>
