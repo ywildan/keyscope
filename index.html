@@ -1,391 +1,45 @@
-<!DOCTYPE html>
-<html lang="id">
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KeyScope · API Model Detector</title>
-<meta name="description" content="KeyScope — deteksi model AI apa saja yang bisa diakses oleh sebuah API key.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --color-primary:#1E293B;
-    --color-on-primary:#FFFFFF;
-    --color-secondary:#334155;
-    --color-on-secondary:#FFFFFF;
-    --color-accent:#22C55E;
-    --color-on-accent:#0F172A;
-    --color-background:#0F172A;
-    --color-foreground:#F8FAFC;
-    --color-card:#1B2336;
-    --color-card-foreground:#F8FAFC;
-    --color-muted:#272F42;
-    --color-muted-foreground:#94A3B8;
-    --color-border:#475569;
-    --color-destructive:#EF4444;
-    --color-on-destructive:#000000;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{
-    background:var(--color-background);
-    color:var(--color-foreground);
-    font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
-  }
-  .container{max-width:880px;margin:0 auto;padding:0 20px}
-
-  header.site{
-    border-bottom:1px solid var(--color-border);
-    padding:20px 0;
-    margin-bottom:32px;
-    background:linear-gradient(180deg,rgba(30,41,59,.35),transparent);
-  }
-  header.site .inner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;letter-spacing:.5px}
-  .logo .dot{width:10px;height:10px;border-radius:50%;background:var(--color-accent);box-shadow:0 0 10px var(--color-accent)}
-  .badge{
-    font-size:12px;color:var(--color-accent);
-    border:1px solid var(--color-accent);border-radius:999px;
-    padding:4px 10px;opacity:.9;
-  }
-
-  h1{font-size:clamp(24px,4vw,38px);line-height:1.2;margin-bottom:12px;letter-spacing:-.5px}
-  h1 .accent{color:var(--color-accent);text-shadow:0 0 12px rgba(34,197,94,.35)}
-  .sub{color:var(--color-muted-foreground);margin-bottom:28px;max-width:640px}
-
-  .panel{background:var(--color-card);border:1px solid var(--color-border);border-radius:12px;padding:24px;margin-bottom:24px}
-  .field{margin-bottom:18px}
-  .field label{display:block;font-size:13px;color:var(--color-muted-foreground);margin-bottom:8px;letter-spacing:.5px}
-  .field input[type=text],.field input[type=password],.field select{
-    width:100%;padding:12px 14px;font-size:14px;
-    background:var(--color-muted);border:1px solid var(--color-border);border-radius:8px;
-    color:var(--color-foreground);font-family:inherit;transition:border-color .2s,box-shadow .2s;
-  }
-  .field input:focus,.field select:focus{
-    outline:none;border-color:var(--color-accent);box-shadow:0 0 0 3px rgba(34,197,94,.15);
-  }
-  .field .hint{font-size:12px;color:var(--color-muted-foreground);margin-top:6px}
-
-  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
-  .row .field{flex:1;min-width:180px;margin-bottom:0}
-
-  button{
-    cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;
-    padding:12px 20px;border-radius:8px;border:1px solid transparent;
-    transition:background .2s,transform .1s,box-shadow .2s,opacity .2s;
-  }
-  button:active{transform:translateY(1px)}
-  button.primary{
-    background:var(--color-accent);color:var(--color-on-accent);
-    box-shadow:0 0 16px rgba(34,197,94,.25);
-  }
-  button.primary:hover{box-shadow:0 0 22px rgba(34,197,94,.4)}
-  button.primary:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
-  button:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}
-
-  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-  .preset{
-    background:var(--color-muted);color:var(--color-muted-foreground);
-    border:1px solid var(--color-border);padding:6px 12px;font-size:12px;border-radius:999px;
-  }
-  .preset:hover{color:var(--color-accent);border-color:var(--color-accent)}
-
-  #status{display:none;align-items:center;gap:10px;margin-bottom:16px;font-size:14px;color:var(--color-accent)}
-  .spinner{width:16px;height:16px;border:2px solid var(--color-border);border-top-color:var(--color-accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  .error{
-    display:none;background:rgba(239,68,68,.12);border:1px solid var(--color-destructive);
-    color:#FCA5A5;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-size:14px;
-    white-space:pre-wrap;word-break:break-word;
-  }
-
-  .summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-  .stat{
-    flex:1;min-width:120px;background:var(--color-muted);border:1px solid var(--color-border);
-    border-radius:8px;padding:12px 16px;text-align:center;
-  }
-  .stat .num{font-size:24px;font-weight:700;color:var(--color-accent)}
-  .stat .lbl{font-size:11px;color:var(--color-muted-foreground);letter-spacing:1px;margin-top:2px}
-
-  .group{margin-bottom:22px}
-  .group h3{
-    font-size:13px;letter-spacing:1.5px;color:var(--color-muted-foreground);
-    text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--color-border);
-    display:flex;align-items:center;gap:8px;
-  }
-  .group .count{color:var(--color-accent);font-weight:700}
-  chip{cursor:pointer;user-select:none}
-
-  .model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
-  .model-chip{
-    background:var(--color-muted);color:var(--color-foreground);
-    border:1px solid var(--color-border);border-radius:8px;
-    padding:10px 12px;font-size:12.5px;display:flex;align-items:center;gap:9px;
-    transition:border-color .2s,background .2s;
-  }
-  .model-chip:hover{border-color:var(--color-accent);background:var(--color-secondary)}
-  .model-chip .glyph{color:var(--color-accent);flex-shrink:0}
-  .model-chip .name{color:var(--color-foreground);word-break:break-word}
-  .model-chip .copy{color:var(--color-muted-foreground);opacity:0;margin-left:auto;font-size:11px;flex-shrink:0;transition:opacity .2s}
-  .model-chip:hover .copy{opacity:1}
-  .model-chip .copy:hover{color:var(--color-accent)}
-
-  .empty{color:var(--color-muted-foreground);text-align:center;padding:30px 0;font-size:14px}
-
-  .tips{margin-top:24px;padding:18px;border:1px dashed var(--color-border);border-radius:10px;font-size:13px;color:var(--color-muted-foreground)}
-  .tips h3{color:var(--color-foreground);font-size:14px;margin-bottom:10px}
-  .tips code{color:var(--color-accent);background:var(--color-muted);padding:2px 6px;border-radius:4px;font-size:12px}
-
-  footer.site{border-top:1px solid var(--color-border);margin-top:48px;padding:24px 0;color:var(--color-muted-foreground);font-size:12px;text-align:center}
-
-  @media (prefers-reduced-motion:reduce){
-    .spinner{animation-duration:1.6s}
-    *{transition:none!important}
-  }
-  @media (max-width:600px){
-    .panel{padding:18px}
-    .row{flex-direction:column;align-items:stretch}
-    .row .field{min-width:0}
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KeyScope // Model Intelligence</title>
+  <meta name="description" content="Map every AI model accessible through an OpenAI-compatible API key.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#070a12;--panel:rgba(14,19,33,.78);--line:#26324d;--text:#edf4ff;--muted:#8190ad;--cyan:#64e9ff;--violet:#a88bff;--pink:#ff79c9;--green:#77f5bb}
+    *{box-sizing:border-box;margin:0}html{scroll-behavior:smooth}body{min-height:100vh;background:var(--bg);color:var(--text);font:15px/1.6 'DM Sans',sans-serif;overflow-x:hidden}
+    body:before{content:"";position:fixed;inset:0;z-index:-3;background:radial-gradient(circle at 73% 8%,#302064 0,transparent 31%),radial-gradient(circle at 8% 45%,#063f58 0,transparent 25%),linear-gradient(120deg,#070a12,#0c1020 48%,#080b15)}
+    body:after{content:"";position:fixed;inset:0;z-index:-2;opacity:.22;background-image:linear-gradient(rgba(100,233,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(100,233,255,.08) 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(to bottom,black,transparent 78%);pointer-events:none}
+    a{color:inherit}.wrap{width:min(1120px,calc(100% - 40px));margin:auto}.mono{font-family:'Space Mono',monospace}.topbar{padding:25px 0;border-bottom:1px solid rgba(129,144,173,.18);background:rgba(7,10,18,.45);backdrop-filter:blur(14px)}.topbar .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px}.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.06em}.brand-mark{display:grid;place-items:center;width:33px;height:33px;border:1px solid var(--cyan);border-radius:9px;color:var(--cyan);box-shadow:0 0 24px rgba(100,233,255,.25);font-size:17px}.brand small{display:block;color:var(--muted);font-size:10px;font-weight:400;letter-spacing:.18em;margin-top:2px}.telemetry{color:var(--muted);font:11px 'Space Mono';letter-spacing:.1em}.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);margin-right:7px;animation:pulse 2s infinite}@keyframes pulse{50%{opacity:.35;transform:scale(.7)}}
+    .hero{padding:86px 0 48px;position:relative}.hero:after{content:"";position:absolute;width:240px;height:240px;right:4%;top:25px;border:1px solid rgba(168,139,255,.16);border-radius:50%;box-shadow:0 0 0 28px rgba(168,139,255,.025),0 0 0 56px rgba(168,139,255,.018);pointer-events:none}.eyebrow{color:var(--cyan);font:11px 'Space Mono';letter-spacing:.25em;text-transform:uppercase;margin-bottom:20px}.eyebrow:before{content:'✦';margin-right:10px;color:var(--pink)}h1{max-width:760px;font-size:clamp(42px,7vw,84px);line-height:.98;letter-spacing:-.065em;margin-bottom:24px}h1 em{font-style:normal;color:var(--cyan);text-shadow:0 0 35px rgba(100,233,255,.35)}.intro{max-width:590px;color:var(--muted);font-size:17px}.hero-meta{display:flex;gap:28px;margin-top:32px;color:var(--muted);font:11px 'Space Mono';text-transform:uppercase;letter-spacing:.08em}.hero-meta b{color:var(--text);font-size:13px;margin-right:4px}.orb{position:absolute;right:13%;top:125px;width:15px;height:15px;border-radius:50%;background:var(--pink);box-shadow:0 0 20px 5px rgba(255,121,201,.55);animation:float 4s ease-in-out infinite}@keyframes float{50%{transform:translate(34px,28px)}}
+    .panel{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.04);backdrop-filter:blur(20px)}.scanner{padding:27px}.panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}.panel-title{font:12px 'Space Mono';letter-spacing:.13em;text-transform:uppercase}.panel-title span{color:var(--cyan)}.panel-code{color:#53617e;font:11px 'Space Mono'}.fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}.field label{display:block;color:var(--muted);font:11px 'Space Mono';letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px}.input-wrap{position:relative}.field input,.field select{width:100%;border:1px solid #2c3956;border-radius:10px;background:#080d1a;color:var(--text);font:14px 'Space Mono';padding:15px;outline:0;transition:.25s}.field input:focus,.field select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(100,233,255,.1),0 0 25px rgba(100,233,255,.12)}.field select{appearance:none;cursor:pointer}.select-arrow{position:absolute;right:15px;top:13px;color:var(--cyan);pointer-events:none}.hint{color:#5e6b85;font-size:12px;margin-top:8px}.custom{display:none;margin-top:18px}.custom.visible{display:block}.actions{display:flex;align-items:center;gap:15px;margin-top:24px;padding-top:22px;border-top:1px solid rgba(129,144,173,.16)}button{font:700 13px 'Space Mono';cursor:pointer;border-radius:9px;transition:.2s}button:focus-visible{outline:2px solid var(--pink);outline-offset:3px}.scan-btn{padding:15px 24px;border:1px solid var(--cyan);background:var(--cyan);color:#071019;box-shadow:0 0 25px rgba(100,233,255,.25)}.scan-btn:hover{transform:translateY(-2px);box-shadow:0 0 35px rgba(100,233,255,.5)}.scan-btn:disabled{opacity:.55;cursor:wait;transform:none}.presets{display:flex;gap:8px;flex-wrap:wrap}.preset{padding:8px 11px;border:1px solid #2c3956;background:transparent;color:var(--muted);font-size:11px}.preset:hover{color:var(--cyan);border-color:var(--cyan)}
+    #status{display:none;align-items:center;gap:10px;color:var(--green);font:12px 'Space Mono';margin-top:20px}.spinner{width:14px;height:14px;border:2px solid #2c3956;border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.error{display:none;margin-top:18px;padding:13px 15px;border:1px solid rgba(255,120,145,.55);border-radius:9px;background:rgba(255,120,145,.08);color:#ffacba;font:12px 'Space Mono';white-space:pre-wrap;word-break:break-word}
+    #results{margin-top:28px;animation:reveal .6s both}@keyframes reveal{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}.result-head{display:flex;justify-content:space-between;gap:16px;align-items:end;margin-bottom:16px}.result-title{font-size:21px}.result-title small{display:block;color:var(--muted);font:11px 'Space Mono';letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}.filter{max-width:210px;padding:10px 13px!important;font-size:12px!important;border:1px solid #2c3956;border-radius:10px;background:#080d1a;color:var(--text);font-family:'Space Mono';outline:0}.filter:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(100,233,255,.1)}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:25px}.stat{padding:17px;border:1px solid var(--line);border-radius:12px;background:rgba(13,18,31,.7)}.stat .num{font:700 26px 'Space Mono';color:var(--cyan)}.stat:nth-child(2) .num{color:var(--violet)}.stat:nth-child(3) .num{color:var(--green)}.stat:nth-child(4) .num{color:var(--pink)}.stat .lbl{display:block;color:var(--muted);font:10px 'Space Mono';letter-spacing:.13em;text-transform:uppercase;margin-top:5px}.group{margin:25px 0}.group h3{display:flex;align-items:center;gap:10px;color:var(--muted);font:11px 'Space Mono';letter-spacing:.15em;text-transform:uppercase;margin-bottom:11px}.group h3:after{content:"";height:1px;flex:1;background:var(--line)}.count{color:var(--cyan)}.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:9px}.model-chip{display:flex;align-items:center;gap:10px;width:100%;padding:13px 14px;border:1px solid #26324d;border-radius:9px;background:#0b1120;color:var(--text);text-align:left;font:12px 'Space Mono';word-break:break-all}.model-chip:hover{border-color:var(--cyan);background:#101d2c;box-shadow:0 0 20px rgba(100,233,255,.1);transform:translateY(-2px)}.glyph{color:var(--cyan)}.copy{margin-left:auto;color:#64728d;white-space:nowrap;font-size:10px}.model-chip:hover .copy{color:var(--cyan)}.empty{color:var(--muted);text-align:center;padding:30px}.tips{display:flex;gap:18px;align-items:flex-start;margin:26px 0 70px;padding:19px;border:1px dashed #33415f;border-radius:12px;color:var(--muted);font-size:13px}.tips strong{color:var(--text);display:block;margin-bottom:3px}.tips-icon{color:var(--pink);font-size:20px}.footer{padding:25px 0 38px;border-top:1px solid rgba(129,144,173,.16);color:#53617e;font:11px 'Space Mono';display:flex;justify-content:space-between}.footer a{color:var(--cyan);text-decoration:none}@media(max-width:700px){.wrap{width:min(100% - 28px,1120px)}.telemetry{display:none}.hero{padding:60px 0 38px}.hero:after,.orb{display:none}.fields{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}.result-head{align-items:stretch;flex-direction:column}.filter{max-width:none}.actions{align-items:stretch;flex-direction:column}.presets{justify-content:center}.scan-btn{width:100%}.footer{display:block}.footer span{display:block;margin-bottom:8px}}
+  </style>
 </head>
 <body>
-
-<header class="site">
-  <div class="container inner">
-    <div class="logo"><span class="dot"></span> KeyScope</div>
-    <span class="badge">v1.0 · client-side</span>
-  </div>
-</header>
-
-<main class="container">
-  <section>
-    <h1>Model AI apa saja yang <span class="accent">terhubung</span> dengan API key-mu?</h1>
-    <p class="sub">Tempel API key dan pilih provider-nya. Alat ini memanggil endpoint <code>/models</code> dan menampilkan semua model yang bisa kamu akses — dikelompokkan otomatis per kategori.</p>
-
-    <div class="panel">
-      <div class="row">
-        <div class="field" style="flex:1.6">
-          <label for="key">API Key</label>
-          <input type="password" id="key" placeholder="sk-..." autocomplete="off" spellcheck="false">
-        </div>
-        <div class="field">
-          <label for="provider">Provider / Base URL</label>
-          <select id="provider"></select>
-        </div>
-        <div class="field" style="flex:0 0 auto">
-          <label>&nbsp;</label>
-          <button id="detect" class="primary">Deteksi</button>
-        </div>
-      </div>
-
-      <div class="field" id="customUrlField" hidden>
-        <label for="customUrl">Base URL Kustom</label>
-        <input type="text" id="customUrl" placeholder="https://api.deepseek.com/v1" autocomplete="off" spellcheck="false">
-        <p class="hint">Masukkan Base URL penuh, contoh: https://api.deepseek.com/v1 atau http://localhost:4000/v1</p>
-      </div>
-
-      <div class="presets" id="presets" aria-label="Preset API key"></div>
-
-      <p class="hint" style="margin-top:14px">
-        API key hanya dikirim dari browser-mu ke serverless function proxy — tidak disimpan di mana pun.
-      </p>
-    </div>
-
-    <div id="status"><span class="spinner"></span><span id="statusText">Menghubungi endpoint /models...</span></div>
-    <div class="error" id="error" role="alert"></div>
-
-    <section id="results" hidden>
-      <div class="summary">
-        <div class="stat"><div class="num" id="totalCount">0</div><div class="lbl">Total</div></div>
-        <div class="stat"><div class="num" id="gptCount">0</div><div class="lbl">GPT</div></div>
-        <div class="stat"><div class="num" id="embedCount">0</div><div class="lbl">Embedding</div></div>
-        <div class="stat"><div class="num" id="otherCount">0</div><div class="lbl">Lainnya</div></div>
-      </div>
-      <div id="groups" class="groups"></div>
-    </section>
-
-    <div class="tips">
-      <h3>Ketentuan</h3>
-      <ul>
-        <li>Klik chip model untuk menyalin nama model.</li>
-        <li>Mendukung provider OpenAI-compatible (OpenAI, DeepSeek, OpenRouter, Groq, dll).</li>
-        <li>Beberapa provider tidak mengizinkan listing model — akan menampilkan pesan error yang jelas.</li>
-      </ul>
-    </div>
-  </section>
-</main>
-
-<footer class="site">
-  <div class="container">KeyScope · API Model Detector · Deploy sebagai static site + serverless function di Vercel</div>
-</footer>
-
-<script>
-const API_BASE = '/api/models';
-
-const PROVIDERS = [
-  { name:'OpenAI',        base:'https://api.openai.com/v1' },
-  { name:'DeepSeek',      base:'https://api.deepseek.com/v1' },
-  { name:'Groq',          base:'https://api.groq.com/openai/v1' },
-  { name:'OpenRouter',    base:'https://openrouter.ai/api/v1' },
-  { name:'Together AI',   base:'https://api.together.xyz/v1' },
-  { name:'Mistral',       base:'https://api.mistral.ai/v1' },
-  { name:'Fireworks',     base:'https://api.fireworks.ai/inference/v1' },
-  { name:'Perplexity',    base:'https://api.perplexity.ai' },
-  { name:'xAI (Grok)',    base:'https://api.x.ai/v1' },
-  { name:'NVIDIA NIM',    base:'https://integrate.api.nvidia.com/v1' },
-  { name:'Anthropic',     base:'https://api.anthropic.com/v1' },
-  { name:'LiteLLM Proxy', base:'https://your-proxy.litellm.ai' },
-  { name:'Kustom',        base:'custom' }
-];
-
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-
-const providerSelect = document.getElementById('provider');
-const customUrlField = document.getElementById('customUrlField');
-const customUrlInput = document.getElementById('customUrl');
-
-function syncCustomField(){
-  const isCustom = providerSelect.value === 'custom';
-  customUrlField.hidden = !isCustom;
-  if(isCustom) customUrlInput.focus();
-}
-providerSelect.addEventListener('change', syncCustomField);
-
-PROVIDERS.forEach((p,i)=>{
-  const o=document.createElement('option');
-  o.value=p.base; o.textContent=p.name;
-  if(p.name==='OpenAI') o.selected=true;
-  providerSelect.appendChild(o);
-});
-
-function buildPresets(){
-  const el=document.getElementById('presets');
-  PROVIDERS.filter(p=>p.base).slice(0,8).forEach(p=>{
-    const b=document.createElement('button');
-    b.className='preset'; b.textContent=p.name;
-    b.addEventListener('click',()=>{
-      providerSelect.value=p.base;
-      syncCustomField();
-      const t=providerSelect.value==='custom'?customUrlInput:'';
-      document.getElementById('key').focus();
-    });
-    el.appendChild(b);
-  });
-}
-buildPresets();
-
-function classify(models){
-  return {
-    gpt:   models.filter(m=>/gpt[-_]?4|\bgpt4\b/i.test(m) && !/embed/i.test(m)),
-    strong:models.filter(m=>/claude|gemini|deepseek|llama|mistral|qwen|grok|command/i.test(m) && !/embed/i.test(m) && !/gpt/i.test(m)),
-    embed: models.filter(m=>/embed/i.test(m)),
-    other: models.filter(m=>!/gpt/i.test(m) && !/embed/i.test(m) && !/claude|gemini|deepseek|llama|mistral|qwen|grok|command/i.test(m))
-  };
-}
-
-function renderChips(models){
-  return models.map(m=>(
-    `<button class="model-chip" onclick="copyModel(this)" data-model="${esc(m)}">
-      <span class="glyph" aria-hidden="true">&#9656;</span>
-      <span class="name">${esc(m)}</span>
-      <span class="copy">&#10697;</span>
-    </button>`
-  )).join('') || '<div class="empty">Tidak ada model di kategori ini</div>';
-}
-
-function renderResults(models){
-  const groups=document.getElementById('groups');
-  const cats=classify(models);
-  document.getElementById('totalCount').textContent=models.length;
-  document.getElementById('gptCount').textContent=cats.gpt.length+cats.strong.length;
-  document.getElementById('embedCount').textContent=cats.embed.length;
-  document.getElementById('otherCount').textContent=cats.other.length;
-
-  const sections=[
-    {title:'GPT / LLM Utama', models:cats.gpt.concat(cats.strong)},
-    {title:'Embedding', models:cats.embed},
-    {title:'Lainnya', models:cats.other}
-  ];
-  groups.innerHTML=sections.map(s=>(
-    s.models.length ? `
-      <div class="group">
-        <h3>${esc(s.title)} <span class="count">${s.models.length}</span></h3>
-        <div class="model-grid">${renderChips(s.models)}</div>
-      </div>` : ''
-  )).join('');
-
-  document.getElementById('results').hidden=false;
-  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-window.copyModel=function(btn){
-  const text=btn.dataset.model;
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(text).then(()=>btn.classList.add('copied'));
-  }else{
-    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
-    try{document.execCommand('copy');}catch(e){}
-    document.body.removeChild(ta);
-  }
-  const old=btn.querySelector('.copy').textContent;
-  btn.querySelector('.copy').textContent='OK';
-  setTimeout(()=>btn.querySelector('.copy').textContent=old,1200);
-};
-
-function setStatus(on,msg){
-  const el=document.getElementById('status');
-  el.style.display=on?'flex':'none';
-  if(msg)document.getElementById('statusText').textContent=msg;
-}
-function showError(msg){
-  const el=document.getElementById('error');
-  el.textContent=msg;el.style.display='block';
-}
-function clearError(){document.getElementById('error').style.display='none';}
-
-async function detect(){
-  const key=document.getElementById('key').value.trim();
-  const base=providerSelect.value.trim()==='custom'
-    ? customUrlInput.value.trim()
-    : providerSelect.value.trim();
-
-  if(!key){showError('Mohon masukkan API key terlebih dahulu.');document.getElementById('key').focus();return;}
-  if(!base){showError('Untuk provider kustom, masukkan Base URL lengkap.');customUrlInput.focus();return;}
-
-  const btn=document.getElementById('detect');
-  btn.disabled=true;clearError();
-  setStatus(true,'Menghubungi endpoint /models...');
-
-  try{
-    const res=await fetch(API_BASE,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({apiKey:key,baseUrl:base})
-    });
-    const data=await res.json().catch(()=>({error:'Respons tidak valid dari server.'}));
-
-    if(!res.ok || data.error){
-      showError(data.error || ('HTTP '+res.status));
-    }else if(Array.isArray(data.models)){
-      renderResults(data.models);
-      setStatus(false);
-    }else{
-      showError('Format respons tidak dikenali.');
-    }
-  }catch(e){
-    showError('Gagal terhubung: '+e.message);
-  }finally{
-    setStatus(false);
-    btn.disabled=false;
-  }
-}
-
-document.getElementById('detect').addEventListener('click',detect);
-document.getElementById('key').addEventListener('keydown',e=>{if(e.key==='Enter')detect();});
-</script>
-</body>
-</html>
+  <header class="topbar"><div class="wrap"><div class="brand"><span class="brand-mark">⌁</span><span>KEYSCOPE<small>MODEL INTELLIGENCE</small></span></div><div class="telemetry"><i class="pulse"></i>SCANNER ONLINE　/　v2.0.4</div></div></header>
+  <main class="wrap">
+    <section class="hero"><span class="orb"></span><p class="eyebrow">API surface mapping tool</p><h1>See what your key<br>can <em>really access.</em></h1><p class="intro">Connect to an OpenAI-compatible endpoint and reveal its entire model surface in seconds. No storage. No noise. Just signal.</p><div class="hero-meta"><span><b>01</b> ENTER CREDENTIALS</span><span><b>02</b> MAP THE SURFACE</span></div></section>
+    <section class="panel scanner" aria-label="Model scanner"><div class="panel-head"><div class="panel-title"><span>⌁</span> New reconnaissance scan</div><div class="panel-code">ENCRYPTED TRANSPORT</div></div><div class="fields"><div class="field"><label for="key">API key</label><div class="input-wrap"><input id="key" type="password" placeholder="sk-••••••••••••••••" autocomplete="off"></div><p class="hint">Your key passes through the scanner and is never stored.</p></div><div class="field"><label for="provider">Provider endpoint</label><div class="input-wrap"><select id="provider"></select><span class="select-arrow">⌄</span></div><p class="hint">Any provider exposing a <span class="mono">GET /models</span> route.</p></div></div><div class="custom field" id="customUrlField"><label for="customUrl">Custom base URL</label><input id="customUrl" type="text" placeholder="https://your-gateway.example/v1"></div><div class="actions"><button class="scan-btn" id="detect">Run model scan　→</button><div class="presets" id="presets"></div></div><div id="status"><span class="spinner"></span><span id="statusText">Querying /models...</span></div><div class="error" id="error" role="alert"></div></section>
+    <section id="results" class="panel" hidden><div style="padding:27px"><div class="result-head"><div class="result-title"><small>Scan complete</small>Accessible model surface</div><input class="field filter" id="filter" type="search" placeholder="Filter model IDs..."></div><div class="summary"><div class="stat"><div class="num" id="totalCount">0</div><span class="lbl">Total models</span></div><div class="stat"><div class="num" id="gptCount">0</div><span class="lbl">Language</span></div><div class="stat"><div class="num" id="embedCount">0</div><span class="lbl">Embeddings</span></div><div class="stat"><div class="num" id="otherCount">0</div><span class="lbl">Other</span></div></div><div id="groups"></div></div></section>
+    <aside class="tips"><span class="tips-icon">✦</span><p><strong>Fast reconnaissance, private by design.</strong>KeyScope only requests the provider’s model list. Click any result to copy its exact ID. Some providers may restrict model listing even when inference is enabled.</p></aside>
+  </main>
+  <footer class="footer wrap"><span>KEYSCOPE // OPEN MODEL VISIBILITY</span><a href="https://github.com/ywildan/keyscope" target="_blank" rel="noreferrer">VIEW SOURCE ↗</a></footer>
+  <script>
+    const API_BASE='/api/models';
+    const PROVIDERS=[['OpenAI','https://api.openai.com/v1'],['DeepSeek','https://api.deepseek.com/v1'],['Groq','https://api.groq.com/openai/v1'],['OpenRouter','https://openrouter.ai/api/v1'],['Together AI','https://api.together.xyz/v1'],['Mistral','https://api.mistral.ai/v1'],['Fireworks','https://api.fireworks.ai/inference/v1'],['Perplexity','https://api.perplexity.ai'],['xAI (Grok)','https://api.x.ai/v1'],['NVIDIA NIM','https://integrate.api.nvidia.com/v1'],['Anthropic','https://api.anthropic.com/v1'],['LiteLLM Proxy','https://your-proxy.litellm.ai'],['Custom','custom']];
+    const provider=document.getElementById('provider'), customField=document.getElementById('customUrlField'), customUrl=document.getElementById('customUrl');
+    PROVIDERS.forEach(([name,base])=>{const o=document.createElement('option');o.textContent=name;o.value=base;provider.append(o)});
+    function syncCustom(){customField.classList.toggle('visible',provider.value==='custom');if(provider.value==='custom')customUrl.focus()}provider.addEventListener('change',syncCustom);
+    const presets=document.getElementById('presets');[['OpenAI','https://api.openai.com/v1'],['Groq','https://api.groq.com/openai/v1'],['DeepSeek','https://api.deepseek.com/v1']].forEach(([name,base])=>{const b=document.createElement('button');b.className='preset';b.textContent=name;b.onclick=()=>{provider.value=base;syncCustom()};presets.append(b)});
+    function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function setStatus(on,msg){document.getElementById('status').style.display=on?'flex':'none';if(msg)document.getElementById('statusText').textContent=msg}function showError(msg){const e=document.getElementById('error');e.textContent=msg;e.style.display='block'}function clearError(){document.getElementById('error').style.display='none'}
+    let scanned=[];function category(id){const x=id.toLowerCase();if(/embed|bge-|e5-|ada/.test(x))return'embed';if(/gpt|claude|gemini|llama|mistral|mixtral|deepseek|qwen|command|sonar|o[1-9]|phi/.test(x))return'gpt';return'other'}
+    function renderResults(models){scanned=models;document.getElementById('totalCount').textContent=models.length;draw(models);document.getElementById('results').hidden=false;document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'})}function draw(models){const cats={gpt:[],embed:[],other:[]};models.forEach(id=>cats[category(id)].push(id));document.getElementById('gptCount').textContent=cats.gpt.length;document.getElementById('embedCount').textContent=cats.embed.length;document.getElementById('otherCount').textContent=cats.other.length;const titles={gpt:'Language models',embed:'Embedding models',other:'Other models'};document.getElementById('groups').innerHTML=Object.keys(cats).map(k=>cats[k].length?`<div class="group"><h3>${titles[k]} <span class="count">${cats[k].length}</span></h3><div class="model-grid">${cats[k].map(id=>`<button class="model-chip" data-model="${esc(id)}" onclick="copyModel(this)"><span class="glyph">◈</span><span>${esc(id)}</span><span class="copy">COPY</span></button>`).join('')}</div></div>`:'').join('')||'<div class="empty">No models match this filter.</div>'}
+    window.copyModel=async btn=>{try{await navigator.clipboard.writeText(btn.dataset.model)}catch(e){}const copy=btn.querySelector('.copy');copy.textContent='COPIED';setTimeout(()=>copy.textContent='COPY',1200)};document.getElementById('filter').addEventListener('input',e=>draw(scanned.filter(id=>id.toLowerCase().includes(e.target.value.toLowerCase()))));
+    async function detect(){const key=document.getElementById('key').value.trim(),base=provider.value==='custom'?customUrl.value.trim():provider.value;if(!key){showError('Please enter an API key first.');document.getElementById('key').focus();return}if(!base){showError('Please enter a custom base URL.');customUrl.focus();return}const btn=document.getElementById('detect');btn.disabled=true;clearError();setStatus(true,'Querying /models...');try{const res=await fetch(API_BASE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:key,baseUrl:base})});const data=await res.json().catch(()=>({error:'Invalid server response.'}));if(!res.ok||data.error)showError(data.error||`HTTP ${res.status}`);else if(Array.isArray(data.models)){renderResults(data.models);setStatus(false)}else showError('Unrecognized response format.')}catch(e){showError('Connection failed: '+e.message)}finally{setStatus(false);btn.disabled=false}}document.getElementById('detect').addEventListener('click',detect);document.getElementById('key').addEventListener('keydown',e=>{if(e.key==='Enter')detect()});
+  </script>
+</body></html>
